@@ -577,9 +577,3 @@ npm start        # Start backend with node
 - Theme selection is handled on the frontend through DaisyUI themes and Zustand.
 - Reports use dynamic references through Mongoose `refPath`, allowing one report model to handle multiple content types.
 - Certificates use `pdf-lib` and the template file in `EducationServer/public/pdfTemplate.pdf`.
-
-## Suggested Git Commit Message
-
-```text
-docs: add complete project README
-```
