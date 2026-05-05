@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+/* eslint-disable react/prop-types */
+import { useEffect, useState } from "react";
 import { useAuthStore } from "../store/useAuthStore";
 import { Camera, User, Mail, Heart, X, Loader } from "lucide-react";
 import { useUserStore } from "../store/useuserStore";
@@ -17,6 +18,17 @@ const Profile = () => {
   const { updateProfile } = useUserStore();
   const MAX_INTEREST_LENGTH = 8;
   const MAX_IMAGE_SIZE_MB = 2;
+
+  useEffect(() => {
+    if (!user) return;
+
+    setUpdatedUser(user);
+    setUpdateData({
+      profilePic: user.profilePic,
+      name: user.name,
+      interests: user.interests || [],
+    });
+  }, [user]);
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
@@ -60,8 +72,10 @@ const Profile = () => {
   const saveData = async () => {
     setIsUpdatingProfile(true);
     try {
-      await updateProfile(updateData);
-      setUpdatedUser(prev => ({ ...prev, ...updateData }));
+      const savedUser = await updateProfile(updateData);
+      if (!savedUser) return;
+
+      setUpdatedUser(savedUser);
       setShowOptions(false);
     } catch (error) {
       console.error("Update failed:", error);
@@ -82,8 +96,9 @@ const Profile = () => {
   const hasChanges =
     updateData.profilePic !== updatedUser.profilePic ||
     updateData.name !== updatedUser.name ||
-    JSON.stringify(updateData.interests) !==
-      JSON.stringify(updatedUser.interests);
+    (user?.role === "student" &&
+      JSON.stringify(updateData.interests) !==
+        JSON.stringify(updatedUser.interests || []));
 
   return (
     <div className="min-h-screen bg-base-100 pt-20">

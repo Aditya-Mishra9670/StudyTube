@@ -1,5 +1,5 @@
 import { Eye, EyeOff, Save, Lock, Loader } from "lucide-react";
-import React, { useState } from "react";
+import { useState } from "react";
 import toast from "react-hot-toast";
 import { useUserStore } from "../store/useuserStore";
 

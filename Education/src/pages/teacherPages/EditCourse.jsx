@@ -6,6 +6,8 @@ import { Loader } from "lucide-react";
 
 const levels = ["Beginner", "Intermediate", "Advanced"];
 
+const formatSyllabus = (syllabus) => Array.isArray(syllabus) ? syllabus.join("\n") : syllabus || "";
+
 const EditCourse = () => {
   const [loading, setLoading] = useState(false);
   const [formChanged, setFormChanged] = useState(false);
@@ -18,7 +20,7 @@ const EditCourse = () => {
     description: selectedCourse?.description || "",
     category:selectedCourse?.category || "",
     thumbnail: selectedCourse?.thumbnail || null,
-    syllabus: selectedCourse?.syllabus || "",
+    syllabus: formatSyllabus(selectedCourse?.syllabus),
     level: selectedCourse?.level ||levels[0],
     thumbnailPreview: selectedCourse?.thumbnail ||"",
   });
@@ -39,7 +41,7 @@ const EditCourse = () => {
           description: course.description,
           category: course.category,
           thumbnail: course.thumbnail,
-          syllabus: course.syllabus,
+          syllabus: formatSyllabus(course.syllabus),
           level: course.level,
           thumbnailPreview: course.thumbnail,
         });
@@ -83,7 +85,7 @@ const EditCourse = () => {
       description: selectedCourse?.description,
       category: selectedCourse?.category,
       thumbnail: selectedCourse?.thumbnail,
-      syllabus: selectedCourse?.syllabus,
+      syllabus: formatSyllabus(selectedCourse?.syllabus),
       level: selectedCourse?.level,
     };
 
@@ -104,7 +106,7 @@ const EditCourse = () => {
       description: selectedCourse.description,
       category: selectedCourse.category,
       thumbnail: selectedCourse.thumbnail,
-      syllabus: selectedCourse.syllabus,
+      syllabus: formatSyllabus(selectedCourse.syllabus),
       level: selectedCourse.level,
     };
 

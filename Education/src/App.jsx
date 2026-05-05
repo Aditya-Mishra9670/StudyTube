@@ -5,6 +5,7 @@ import {
   Signup,
   Home,
   ForgotPass,
+  ResetPass,
   Error,
   Courses,
   CourseIndividual,
@@ -25,6 +26,7 @@ import {
   EditCourse,
   CourseDetails,
   EditVideo,
+  Notifications,
 } from "./pages";
 import { useThemeStore } from "./store/useThemeStore";
 import { Toaster } from "react-hot-toast";
@@ -55,9 +57,11 @@ function App() {
         <Route path="/login"  element={ !user ? <Login /> :<Navigate to="/"/>} />
         <Route path="/signup" element={ !user ? <Signup /> :<Navigate to="/"/>}  />
         <Route path="/forgot-password" element={ !user ? <ForgotPass /> :<Navigate to="/"/>}  />
+        <Route path="/reset-password/:token" element={ !user ? <ResetPass /> :<Navigate to="/"/>}  />
         <Route path="/courses" element={ user && user.role === "student" ? <Courses /> :<Navigate to="/login"/>}  />
         <Route path="/courses/:courseId" element={ user && user.role === "student" ? <CourseIndividual /> :<Navigate to="/login"/>} />
         <Route path="/course/video/:id" element={ user && user.role === "student" ? <Streaming /> :<Navigate to="/login"/>} />
+        <Route path="/notifications" element={ user && user.role === "student" ? <Notifications /> :<Navigate to="/login"/>} />
         <Route path="/profile" element={ user  ? <Profile /> :<Navigate to="/login"/>}  />
         <Route path="/settings" element={<Settings />} />
         <Route path="/about" element={<AboutUs />} />

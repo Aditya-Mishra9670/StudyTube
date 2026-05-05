@@ -52,31 +52,21 @@ export const useTeacherStore = create((set, get) => ({
   },
 
   uploadVideo: async (data) => {
-    set({ uploadVideo: true });
+    set({ uploadingVideo: true });
     try {
       const formData = new FormData();
       formData.append("file", data.file);
-      formData.append("upload_preset", import.meta.env.VITE_CLOUDINARY_PRESET);
 
-      const videoRes = await fetch(
-        `https://api.cloudinary.com/v1_1/${
-          import.meta.env.VITE_CLOUD_NAME
-        }/video/upload`,
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
-
-      const videoData = await videoRes.json();
-      const fileURL = videoData.secure_url;
-      const duration = videoData.duration;
-      const result = { fileURL, duration };
-      return result;
+      const res = await axiosInstance.post("/teacher/uploadVideoFile", formData, {
+        timeout: 5 * 60 * 1000,
+      });
+      return res?.data?.data;
     } catch (error) {
       console.log(error);
+      toast.error(error?.response?.data?.message || "Failed to upload video");
+      return null;
     } finally {
-      set({ uploadVideo: false });
+      set({ uploadingVideo: false });
     }
   },
 
@@ -107,12 +97,21 @@ export const useTeacherStore = create((set, get) => ({
   },
 
   createCourse: async (data) => {
+    const { myCourses } = get();
     set({ creatingCourse: true });
     try {
       const res = await axiosInstance.post("/teacher/createCourse", data);
-      console.log(res?.data?.data);
+      const newCourse = res?.data?.data;
+      if (myCourses) {
+        set({ myCourses: [newCourse, ...myCourses] });
+      }
+      set({ selectedCourse: newCourse });
+      toast.success("Course created successfully");
+      return newCourse;
     } catch (error) {
       console.log(error);
+      toast.error(error?.response?.data?.message || "Failed to create course");
+      return null;
     } finally {
       set({ creatingCourse: false });
     }
@@ -161,9 +160,11 @@ export const useTeacherStore = create((set, get) => ({
 
       console.log(res?.data?.data);
       toast.success("Video uploaded successfully");
+      return res?.data?.data;
     } catch (error) {
       console.log(error);
       toast.error(error?.response?.data?.message);
+      return null;
     } finally {
       set({ addingVideo: false });
     }

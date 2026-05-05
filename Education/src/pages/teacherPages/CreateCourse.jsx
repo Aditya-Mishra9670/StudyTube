@@ -1,7 +1,19 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Book, TextCursor, Globe, BarChart, Folder, List, Image, Plus, Tag, Loader, X } from "lucide-react";
 import toast from "react-hot-toast";
 import { useTeacherStore } from "../../store/useTeacherStore";
+
+const renderFormField = (label, Icon, children) => (
+  <div className="form-control">
+    <label className="label">
+      <span className="label-text text-lg font-semibold flex items-center gap-2">
+        <Icon className="w-5 h-5" />
+        {label}
+      </span>
+    </label>
+    {children}
+  </div>
+);
 
 const CreateCourse = () => {
   const { createCourse, creatingCourse } = useTeacherStore();
@@ -16,28 +28,16 @@ const CreateCourse = () => {
     tags: [],
   });
 
-  const FormField = ({ label, icon: Icon, children }) => (
-    <div className="form-control">
-      <label className="label">
-        <span className="label-text text-lg font-semibold flex items-center gap-2">
-          <Icon className="w-5 h-5" />
-          {label}
-        </span>
-      </label>
-      {children}
-    </div>
-  );
-
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = () => setFormData({ ...formData, thumbnail: reader.result });
+    reader.onload = () => setFormData((prev) => ({ ...prev, thumbnail: reader.result }));
     reader.readAsDataURL(file);
   };
 
@@ -46,22 +46,27 @@ const CreateCourse = () => {
       const tag = e.target.value.trim();
       if (formData.tags.length >= 8) return toast.error("Maximum 8 tags allowed");
       if (formData.tags.includes(tag)) return toast.error("Tag already exists");
-      setFormData({ ...formData, tags: [...formData.tags, tag] });
+      setFormData((prev) => ({ ...prev, tags: [...prev.tags, tag] }));
       e.target.value = "";
     }
   };
 
   const removeTag = (tagToRemove) => {
-    setFormData({ ...formData, tags: formData.tags.filter((tag) => tag !== tagToRemove) });
+    setFormData((prev) => ({
+      ...prev,
+      tags: prev.tags.filter((tag) => tag !== tagToRemove),
+    }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const requiredFields = Object.entries(formData).filter(([key]) => key !== "tags");
     if (requiredFields.some(([, value]) => !value)) {
       return toast.error("Please fill all required fields");
     }
-    createCourse(formData);
+    const course = await createCourse(formData);
+    if (!course) return;
+
     setFormData({
       title: "",
       description: "",
@@ -84,7 +89,7 @@ const CreateCourse = () => {
 
         <div className="card bg-base-100 shadow-xl">
           <form onSubmit={handleSubmit} className="card-body p-6 md:p-8 space-y-4">
-            <FormField label="Title" icon={TextCursor}>
+            {renderFormField("Title", TextCursor, (
               <input
                 type="text"
                 name="title"
@@ -93,9 +98,9 @@ const CreateCourse = () => {
                 value={formData.title}
                 onChange={handleInputChange}
               />
-            </FormField>
+            ))}
 
-            <FormField label="Description" icon={Book}>
+            {renderFormField("Description", Book, (
               <textarea
                 name="description"
                 placeholder="Course Description"
@@ -103,10 +108,10 @@ const CreateCourse = () => {
                 value={formData.description}
                 onChange={handleInputChange}
               />
-            </FormField>
+            ))}
 
             <div className="grid md:grid-cols-2 gap-4">
-              <FormField label="Language" icon={Globe}>
+              {renderFormField("Language", Globe, (
                 <select
                   name="language"
                   className="select select-bordered"
@@ -118,9 +123,9 @@ const CreateCourse = () => {
                   <option>English</option>
                   <option>Hinglish</option>
                 </select>
-              </FormField>
+              ))}
 
-              <FormField label="Level" icon={BarChart}>
+              {renderFormField("Level", BarChart, (
                 <select
                   name="level"
                   className="select select-bordered"
@@ -132,10 +137,10 @@ const CreateCourse = () => {
                   <option>Intermediate</option>
                   <option>Advanced</option>
                 </select>
-              </FormField>
+              ))}
             </div>
 
-            <FormField label="Category" icon={Folder}>
+            {renderFormField("Category", Folder, (
               <input
                 type="text"
                 name="category"
@@ -144,9 +149,9 @@ const CreateCourse = () => {
                 value={formData.category}
                 onChange={handleInputChange}
               />
-            </FormField>
+            ))}
 
-            <FormField label="Syllabus" icon={List}>
+            {renderFormField("Syllabus", List, (
               <textarea
                 name="syllabus"
                 placeholder="Course Syllabus"
@@ -154,9 +159,9 @@ const CreateCourse = () => {
                 value={formData.syllabus}
                 onChange={handleInputChange}
               />
-            </FormField>
+            ))}
 
-            <FormField label="Thumbnail" icon={Image}>
+            {renderFormField("Thumbnail", Image, (
               <div className="flex flex-col gap-4">
                 <input
                   type="file"
@@ -173,7 +178,7 @@ const CreateCourse = () => {
                     />
                     <button
                       type="button"
-                      onClick={() => setFormData({ ...formData, thumbnail: null })}
+                      onClick={() => setFormData((prev) => ({ ...prev, thumbnail: null }))}
                       className="btn btn-circle btn-xs absolute top-1 right-1"
                     >
                       <X className="w-4 h-4" />
@@ -181,9 +186,9 @@ const CreateCourse = () => {
                   </div>
                 )}
               </div>
-            </FormField>
+            ))}
 
-            <FormField label="Tags" icon={Tag}>
+            {renderFormField("Tags", Tag, (
               <div className="space-y-2">
                 <input
                   type="text"
@@ -209,7 +214,7 @@ const CreateCourse = () => {
                   {8 - formData.tags.length} tags remaining
                 </span>
               </div>
-            </FormField>
+            ))}
 
             <div className="card-actions justify-center mt-6">
               <button

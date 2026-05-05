@@ -15,10 +15,7 @@ import User from "../models/user.model.js";
 
 export const updatePass = async (req, res) => {
   const { newPassword, oldPassword } = req.body;
-  console.log(newPassword,oldPassword)
   const user = req.user;
-
-  console.log(user);
 
   try {
     if (!newPassword || !oldPassword) {
@@ -27,7 +24,12 @@ export const updatePass = async (req, res) => {
         .json({ message: "Please provide all required fields" });
     }
 
-    const validOldPass = await bcrypt.compare(oldPassword, user.password);
+    const userWithPassword = await User.findById(user._id);
+    if (!userWithPassword) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const validOldPass = await bcrypt.compare(oldPassword, userWithPassword.password);
     if (!validOldPass) {
       return res.status(400).json({ message: "Incorrect old password" });
     }
@@ -40,8 +42,8 @@ export const updatePass = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-    user.password = hashedPassword;
-    await user.save();
+    userWithPassword.password = hashedPassword;
+    await userWithPassword.save();
 
     return res.status(200).json({ message: "Password updated successfully" });
   } catch (error) {
@@ -55,21 +57,28 @@ export const updateProfile = async (req, res) => {
   const user = req.user;
 
   try {
-    if (name.length > 18) {
+    if (name !== undefined && !name.trim()) {
+      return res.status(400).json({ message: "Name is required" });
+    }
+
+    if (name && name.trim().length > 18) {
       return res
         .status(400)
         .json({ message: "Name should be less than 18 characters" });
     }
-    if (name) user.name = name;
-    if (interests.length > 5) {
+
+    if (name) user.name = name.trim();
+
+    if (interests && (!Array.isArray(interests) || interests.length > 5)) {
       return res
         .status(400)
         .json({ message: "Interests should be less than 5" });
     }
-    if (interests) user.interests = interests;
+
+    if (interests && user.role === "student") user.interests = interests;
 
     //Uploading user profile pic to cloud storage and updating the user doc.
-    if (profilePic) {
+    if (profilePic && profilePic !== user.profilePic) {
       const response = await cloudinary.uploader.upload(profilePic, {
         folder: "StudyTube/ProfilePics",
       });
@@ -545,13 +554,10 @@ export const reportContent = async (req, res) => {
 // User notifications
 export const getNotifications = async (req, res) => {
   try {
-    const notifications = await Notification.find({ userId: req.user.id });
-    if (notifications.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "No notifications found for the specified user.",
-      });
-    }
+    const notifications = await Notification.find({ userId: req.user._id }).sort({
+      createdAt: -1,
+    });
+
     return res.status(200).json({
       success: true,
       data: notifications,
@@ -570,7 +576,17 @@ export const getNotifications = async (req, res) => {
 export const markNotificationAsRead = async (req, res) => {
   try {
     const notificationId = req.body.id;
-    const notification = await Notification.findById(notificationId);
+    if (!mongoose.isValidObjectId(notificationId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid notification id",
+      });
+    }
+
+    const notification = await Notification.findOne({
+      _id: notificationId,
+      userId: req.user._id,
+    });
     if (!notification) {
       return res.status(404).json({
         success: false,
@@ -585,19 +601,27 @@ export const markNotificationAsRead = async (req, res) => {
     });
   } catch (error) {
     console.error("Error marking notification as read:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server Error. Could not mark notification as read.",
+    });
   }
 };
 
 // Mark all notifications as read
 export const markAllNotificationsAsRead = async (req, res) => {
   try {
-    await Notification.updateMany({ userId: req.user.id }, { read: true });
+    await Notification.updateMany({ userId: req.user._id }, { read: true });
     return res.status(200).json({
       success: true,
       message: "All notifications marked as read",
     });
   } catch (error) {
     console.error("Error marking all notifications as read:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server Error. Could not mark all notifications as read.",
+    });
   }
 };
 

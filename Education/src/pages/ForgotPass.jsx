@@ -1,12 +1,28 @@
 import React, { useState } from 'react';
-import { Mail } from 'lucide-react';
+import { Mail, Loader } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { axiosInstance } from '../lib/axios';
 
 const ForgotPass = () => {
   const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Logic for sending reset password link can be added here
+    if (!email) {
+      toast.error('Email is required');
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await axiosInstance.post('/auth/forget-password', { email });
+      toast.success(res.data.message || 'Reset link sent to your email');
+      setEmail('');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to send reset link');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -29,8 +45,9 @@ const ForgotPass = () => {
             <button
               type="submit"
               className="btn bg-primary text-primary-content w-full py-3 rounded-lg hover:bg-primary-focus transition duration-300"
+              disabled={loading}
             >
-              Send Reset Link
+              {loading ? <Loader className="animate-spin" /> : 'Send Reset Link'}
             </button>
           </form>
         </div>

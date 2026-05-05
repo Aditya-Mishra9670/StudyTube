@@ -21,8 +21,8 @@ export const generateAuthToken = (userId, res) => {
 
   res.cookie("token", token, {
     maxAge: 7 * 24 * 60 * 60 * 1000,
-    secure:true,
-    sameSite: "none",
+    secure: false, // Set to false for localhost development
+    sameSite: "lax", // Use 'lax' for localhost
   });
 };
 
@@ -57,7 +57,7 @@ export const sendWelcomeMail = async (email, name) => {
               Ready to dive in? Click the button below to explore courses and start learning today!
             </p>
             <div style="text-align: center; margin: 20px 0;">
-              <a href="https://studytube.com/courses" target="_blank" style="display: inline-block; padding: 10px 20px; background-color: #007bff; color: #fff; text-decoration: none; border-radius: 5px; font-size: 16px;">
+              <a href="http://localhost:5173/courses" target="_blank" style="display: inline-block; padding: 10px 20px; background-color: #007bff; color: #fff; text-decoration: none; border-radius: 5px; font-size: 16px;">
                 Explore Courses
               </a>
             </div>
@@ -141,7 +141,7 @@ export const sendPasswordResetMail = async (email, name, token) => {
         We received a request to reset the password for your StudyTube account. If you made this request, please click the button below to reset your password.
       </p>
       <div style="text-align: center; margin: 20px 0;">
-        <a href="http://studytube.com/reset-password/${encodedToken}" target="_blank" style="display: inline-block; padding: 10px 20px; background-color: #28a745; color: #fff; text-decoration: none; border-radius: 5px; font-size: 16px;">
+        <a href="http://localhost:5173/reset-password/${encodedToken}" target="_blank" style="display: inline-block; padding: 10px 20px; background-color: #28a745; color: #fff; text-decoration: none; border-radius: 5px; font-size: 16px;">
           Reset Password
         </a>
       </div>
@@ -149,7 +149,7 @@ export const sendPasswordResetMail = async (email, name, token) => {
         If you didn't request a password reset, you can ignore this email. Your password will remain unchanged.
       </p>
       <p style="font-size: 16px; color: #555; line-height: 1.6;">
-        Please note that the reset link will expire in 30 minutes.
+        Please note that the reset link will expire in 5 minutes.
       </p>
       <p style="font-size: 16px; color: #555; line-height: 1.6;">
         Best regards,<br>

@@ -2,6 +2,7 @@ import Home from "./Home";
 import Login from "./Login";
 import Signup from "./Signup";
 import ForgotPass from "./ForgotPass";
+import ResetPass from "./ResetPass";
 import Error from "./Error";
 import Courses from "./Courses";
 import CourseIndividual from "./CourseIndividual";
@@ -25,5 +26,6 @@ import TeacherCourses from "./teacherPages/TeacherCourses";
 import EditCourse from "./teacherPages/EditCourse";
 import CourseDetails from "./teacherPages/CourseDetails";
 import EditVideo from "./teacherPages/EditVideo";
+import Notifications from "./Notifications";
 
-export {Login,Signup,Home,ReportView,EditVideo,EditCourse,CourseDetails,ForgotPass,Error,TeacherCourses,ResumeLearning,Courses,Reports,AllUsers,AddVideo,CourseIndividual,Profile,Settings,Streaming,AboutUs,TermsOfUse,Cookies,Privacy,Contact,MyCourses,CreateCourse,AdminDashboard}; 
+export {Login,Signup,Home,ReportView,Notifications,EditVideo,EditCourse,CourseDetails,ForgotPass,ResetPass,Error,TeacherCourses,ResumeLearning,Courses,Reports,AllUsers,AddVideo,CourseIndividual,Profile,Settings,Streaming,AboutUs,TermsOfUse,Cookies,Privacy,Contact,MyCourses,CreateCourse,AdminDashboard}; 

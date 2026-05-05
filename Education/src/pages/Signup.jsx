@@ -32,8 +32,13 @@ const Signup = () => {
       return;
     }
 
-    if (password.length < 6) {
-      toast.error("Password must be at least 6 characters");
+    if (username.length > 18) {
+      toast.error("Username should be less than 18 characters");
+      return;
+    }
+
+    if (password.length < 8) {
+      toast.error("Password must be at least 8 characters long and contain at least 1 uppercase, 1 lowercase, 1 number, and 1 special character");
       return;
     }
 

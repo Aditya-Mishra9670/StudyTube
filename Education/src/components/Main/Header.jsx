@@ -1,13 +1,22 @@
 import { Bell, Lock, Menu, Search, X } from "lucide-react";
-import React, { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { SearchBar, MenuC } from "../index";
 import { useAuthStore } from "../../store/useAuthStore";
+import { useUserStore } from "../../store/useuserStore";
 
 const Header = () => {
   const {user} = useAuthStore();
+  const { notifications, getNotifications } = useUserStore();
   const [showSearchBar, setShowSearchBar] = useState(false);
   const [openMenu, setOpenMenu] = useState(false);
+  const unreadNotifications = notifications.filter((notification) => !notification.read).length;
+
+  useEffect(() => {
+    if (user?.role === "student") {
+      getNotifications();
+    }
+  }, [user?.role, getNotifications]);
 
   return (
     <div className="navbar fixed top-0 z-40 w-full bg-base-100/70 backdrop-blur-xl shadow-lg">
@@ -39,13 +48,18 @@ const Header = () => {
           <span className="hidden sm:inline">Search</span>
         </button>
 
-        {user && (
+        {user?.role === "student" && (
           <Link
             to="/notifications"
-            className="btn btn-sm gap-2 transition-colors"
+            className="btn btn-sm gap-2 transition-colors relative"
           >
             <Bell className="w-5 h-5" />
             <span className="hidden sm:inline">Notifications</span>
+            {unreadNotifications > 0 && (
+              <span className="badge badge-primary badge-xs absolute -top-1 -right-1">
+                {unreadNotifications}
+              </span>
+            )}
           </Link>
         )}
 

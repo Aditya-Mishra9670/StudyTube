@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { axiosInstance } from "../lib/axios";
 import toast from "react-hot-toast";
+import { useAuthStore } from "./useAuthStore";
 
 export const useUserStore = create((set) => ({
   userCourses: null,
@@ -15,24 +16,29 @@ export const useUserStore = create((set) => ({
   myReports: [],
   selectedReport:null,
   myReportsLoading:false,
+  notifications: [],
+  notificationsLoading: false,
 
   updateProfile: async (data) => {
     try {
-      await axiosInstance.post("/user/update-profile", data);
+      const res = await axiosInstance.post("/auth/update-profile", data);
+      useAuthStore.setState({ user: res?.data?.data });
       toast.success("Profile updated successfully");
+      return res?.data?.data;
     } catch (error) {
       console.log(error);
-      toast.error(error.response.data.message);
+      toast.error(error?.response?.data?.message || "Failed to update profile");
+      return null;
     }
   },
 
   updatePass: async (data) => {
     try {
-      await axiosInstance.post("/user/update-pass", data);
+      await axiosInstance.post("/auth/update-pass", data);
       toast.success("Password updated successfully");
     } catch (error) {
       console.log(error);
-      toast.error(error.response.data.message);
+      toast.error(error?.response?.data?.message || "Failed to update password");
     }
   },
 
@@ -41,7 +47,7 @@ export const useUserStore = create((set) => ({
     try {
       const res = await axiosInstance.get("/user/myCourses");
       set({ userCourses: res.data.data });
-    } catch (error) {
+    } catch {
       set({ userCourses: [] });
     } finally {
       set({ myCoursesLoading: false });
@@ -52,12 +58,55 @@ export const useUserStore = create((set) => ({
     set({selectedReport:report})
   },
 
+  getNotifications: async () => {
+    set({ notificationsLoading: true });
+    try {
+      const res = await axiosInstance.get("/user/notifications");
+      set({ notifications: res?.data?.data || [] });
+    } catch (error) {
+      console.log(error);
+      toast.error(error?.response?.data?.message || "Failed to load notifications");
+      set({ notifications: [] });
+    } finally {
+      set({ notificationsLoading: false });
+    }
+  },
+
+  markNotificationAsRead: async (id) => {
+    try {
+      await axiosInstance.put("/user/notifications/mark-as-read", { id });
+      set((state) => ({
+        notifications: state.notifications.map((notification) =>
+          notification._id === id ? { ...notification, read: true } : notification
+        ),
+      }));
+    } catch (error) {
+      console.log(error);
+      toast.error(error?.response?.data?.message || "Failed to update notification");
+    }
+  },
+
+  markAllNotificationsAsRead: async () => {
+    try {
+      await axiosInstance.put("/user/notifications/mark-all-as-read");
+      set((state) => ({
+        notifications: state.notifications.map((notification) => ({
+          ...notification,
+          read: true,
+        })),
+      }));
+    } catch (error) {
+      console.log(error);
+      toast.error(error?.response?.data?.message || "Failed to update notifications");
+    }
+  },
+
   getMyReports: async () => {
     set({ myReportsLoading: true });
     try {
       const res = await axiosInstance.get("/user/myReports");
       set({ myReports: res.data.data });
-    } catch (error) {
+    } catch {
       set({ myReports: [] });
     } finally {
       set({ myReportsLoading: false });
@@ -91,7 +140,7 @@ export const useUserStore = create((set) => ({
     try {
       const res = await axiosInstance.get("/user/allCourses");
       set({ allCourses: res.data.data });
-    } catch (error) {
+    } catch {
       set({ allCourses: [] });
     } finally {
       set({ allCoursesLoading: false });

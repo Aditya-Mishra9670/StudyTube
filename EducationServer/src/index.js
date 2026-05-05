@@ -11,11 +11,31 @@ dotenv.config();
 
 const app = express();
 
+const allowedOrigins = [
+    ...(process.env.CLIENT_URL || '').split(','),
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    'http://localhost:5174',
+    'http://127.0.0.1:5174',
+    'http://localhost:4173',
+    'http://127.0.0.1:4173',
+].map((origin) => origin.trim()).filter(Boolean);
+
+const isLocalOrigin = (origin) => /^https?:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin);
+
 app.use(cors({
-    origin: ['http://localhost:8000','http://localhost:5173'],
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin) || isLocalOrigin(origin)) {
+            return callback(null, true);
+        }
+
+        return callback(new Error(`CORS blocked request from origin: ${origin}`));
+    },
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE','PATCH'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    optionsSuccessStatus: 200,
+    preflightContinue: false,
 }));
 
 app.use(express.json({ limit: "10mb" }));

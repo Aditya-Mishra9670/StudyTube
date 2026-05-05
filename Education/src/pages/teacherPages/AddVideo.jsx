@@ -1,8 +1,24 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { TextCursor, Image, Book, Plus, Video, Loader } from "lucide-react";
 import toast from "react-hot-toast";
 import { useParams } from "react-router-dom";
 import { useTeacherStore } from "../../store/useTeacherStore";
+
+const acceptedVideoFormats = [
+  "video/*",
+  ".mp4",
+  ".mov",
+  ".m4v",
+  ".webm",
+  ".mkv",
+  ".avi",
+  ".wmv",
+  ".flv",
+  ".mpeg",
+  ".mpg",
+  ".3gp",
+  ".ogv",
+];
 
 const AddVideo = () => {
   const { courseId } = useParams();
@@ -12,6 +28,7 @@ const AddVideo = () => {
     description: "",
     thumbnail: null,
     file: null,
+    fileName: "",
     duration: null,
     courseId,
   });
@@ -41,11 +58,18 @@ const AddVideo = () => {
 
     const file = e.target.files[0];
     if (file) {
-      setFormData((prev) => ({ ...prev, file }));
+      setFormData((prev) => ({ ...prev, file: null, fileName: file.name, duration: null }));
       try {
-        const { fileURL, duration } = await uploadVideo({ file });
-        setFormData((prev) => ({ ...prev, file:fileURL, duration }));
-      } catch (error) {
+        const uploadedVideo = await uploadVideo({ file });
+        if (!uploadedVideo) {
+          e.target.value = "";
+          setFormData((prev) => ({ ...prev, fileName: "" }));
+          return;
+        }
+
+        const { fileURL, duration } = uploadedVideo;
+        setFormData((prev) => ({ ...prev, file: fileURL, duration }));
+      } catch {
         toast.error("Failed to upload video");
       }
     }
@@ -59,18 +83,21 @@ const AddVideo = () => {
     }
 
     try {
-      await addVideo(formData);
+      const video = await addVideo(formData);
+      if (!video) return;
+
       setFormData({
         title: "",
         description: "",
         thumbnail: null,
         file: null,
+        fileName: "",
         fileURL: null,
         duration: null,
         courseId,
       });
       setCurrentStep(1);
-    } catch (error) {
+    } catch {
       toast.error("Failed to upload video");
     }
   };
@@ -91,13 +118,13 @@ const AddVideo = () => {
               <input
                 type="file"
                 name="file"
-                accept="video/*"
+                accept={acceptedVideoFormats.join(",")}
                 className="file-input file-input-bordered w-full focus:ring-2 focus:ring-primary"
                 onChange={handleFileChange}
               />
-              {formData.file && (
+              {formData.fileName && (
                 <p className="text-sm mt-2">
-                  Selected file: {formData.file.name}
+                  Selected file: {formData.fileName}
                 </p>
               )}
               {uploadingVideo && (
