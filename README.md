@@ -2,6 +2,8 @@
 
 StudyTube is a full-stack edtech platform where students can discover and enroll in courses, watch lectures, review and report content, track learning progress, and generate completion certificates. Teachers can create courses, upload lectures, manage course content, and update their profile. Admin users can inspect platform reports and manage users.
 
+Live project: https://education-iota-gold.vercel.app/
+
 The project is split into two applications:
 
 - `Education`: React + Vite frontend.

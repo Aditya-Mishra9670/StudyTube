@@ -19,11 +19,16 @@ export const generateAuthToken = (userId, res) => {
     expiresIn: "7d",
   });
 
-  res.cookie("token", token, {
+  const isProd = process.env.NODE_ENV === "production" || process.env.COOKIE_SECURE === "true";
+  const cookieOptions = {
     maxAge: 7 * 24 * 60 * 60 * 1000,
-    secure: false, // Set to false for localhost development
-    sameSite: "lax", // Use 'lax' for localhost
-  });
+    secure: isProd,
+    sameSite: isProd ? "none" : "lax",
+    httpOnly: true,
+  };
+
+  res.cookie("token", token, cookieOptions);
+  return token;
 };
 
 //For sending mails

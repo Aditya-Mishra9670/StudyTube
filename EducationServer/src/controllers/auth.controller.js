@@ -2,13 +2,40 @@ import bcrypt from "bcryptjs";
 import User from "../models/user.model.js";
 import jwt from "jsonwebtoken";
 import validator from "validator";
+import { connectDB } from "../lib/db.js";
 import { generateAuthToken,sendLoginActivityMail,sendPasswordResetMail, sendWelcomeMail,} from "../lib/utils.js";
 
 export const userAuth = (req, res) => {
-  return res.json({ status: true, message: "Authorized", data: req.user });
+  if (!req.user) {
+    const isProd =
+      process.env.NODE_ENV === "production" ||
+      process.env.COOKIE_SECURE === "true";
+
+    if (req.authError) {
+      res.clearCookie("token", {
+        secure: isProd,
+        sameSite: isProd ? "none" : "lax",
+        httpOnly: true,
+      });
+    }
+
+    return res.status(200).json({
+      authenticated: false,
+      status: false,
+      data: null,
+    });
+  }
+
+  return res.status(200).json({
+    authenticated: true,
+    status: true,
+    message: "Authorized",
+    data: req.user,
+  });
 };
 
 export const signup = async (req, res) => {
+   await connectDB(); 
   const { username, email, password, role } = req.body;
   console.log(username, email, password, role);
 
@@ -44,13 +71,19 @@ export const signup = async (req, res) => {
     });
 
     await newUser.save();
-    generateAuthToken(newUser._id,res);
+    const token = generateAuthToken(newUser._id,res);
+    try {
+      const setCookie = res.getHeader && res.getHeader("Set-Cookie");
+      console.info(`[AUTH][SIGNUP] origin=${req.headers.origin} userId=${newUser._id} setCookie=${Array.isArray(setCookie)?setCookie.join('; '):setCookie}`);
+    } catch (e) {
+      console.warn('[AUTH][SIGNUP] failed to read Set-Cookie header', e);
+    }
     // sendWelcomeMail(email, username);
     console.log("Registration Successful");
     const userResponse = newUser.toObject();
     delete userResponse.password;
     delete userResponse.resetPassToken;
-    return res.status(201).json({ data: userResponse, message: "User saved successfully" });
+    return res.status(201).json({ data: userResponse, token, message: "User saved successfully" });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: "Internal server error" });
@@ -84,7 +117,13 @@ export const login = async (req, res) => {
     }
 
     // Generating JWT token for page protection so that no one can go forward without login using urls
-    generateAuthToken(userExistance._id,res);
+    const token = generateAuthToken(userExistance._id,res);
+    try {
+      const setCookie = res.getHeader && res.getHeader("Set-Cookie");
+      console.info(`[AUTH][LOGIN] origin=${req.headers.origin} userId=${userExistance._id} setCookie=${Array.isArray(setCookie)?setCookie.join('; '):setCookie}`);
+    } catch (e) {
+      console.warn('[AUTH][LOGIN] failed to read Set-Cookie header', e);
+    }
 
     //Send Login activity mail here.
     // await sendLoginActivityMail(userExistance.email, userExistance.name);
@@ -95,6 +134,7 @@ export const login = async (req, res) => {
     delete userResponse.resetPassToken;
     return res.status(200).json({
       data: userResponse,
+      token,
       message: "Login Successful!",
     });
   } catch (error) {
@@ -180,7 +220,14 @@ export const resetPassword = async (req, res) => {
 
 export const logout = (req, res) => {
   try {
-    res.clearCookie("token");
+    const isProd = process.env.NODE_ENV === "production" || process.env.COOKIE_SECURE === "true";
+    res.clearCookie("token", { secure: isProd, sameSite: isProd ? "none" : "lax", httpOnly: true });
+    try {
+      const setCookie = res.getHeader && res.getHeader("Set-Cookie");
+      console.info(`[AUTH][LOGOUT] origin=${req.headers.origin} clearedCookie=${Array.isArray(setCookie)?setCookie.join('; '):setCookie}`);
+    } catch (e) {
+      console.warn('[AUTH][LOGOUT] failed to read Set-Cookie header', e);
+    }
     return res.json({ status: true });
   } catch (error) {
     res.status(500).json({ message: "Internal server error" });
